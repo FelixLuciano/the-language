@@ -1,0 +1,90 @@
+upper = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+      | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+      | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+      | "V" | "W" | "X" | "Y" | "Z" ;
+
+lower = "a" | "b" | "c" | "d" | "e" | "f" | "g"
+      | "h" | "i" | "j" | "k" | "l" | "m" | "n"
+      | "o" | "p" | "q" | "r" | "s" | "t" | "u"
+      | "v" | "w" | "x" | "y" | "z" ;
+
+letter = upper | lower ;
+
+symbol = "!" | "@" | "#" | "$" | "%" | "&" | "*"
+       | "(" | ")" | "[" | "]" | "{" | "}" | "-"
+       | "_" | "=" | "+" | "," | "." | ";" | "<"
+       | ">" | ":" | "?" | "/" | "\" | "|" | "?" ;
+
+character = letter | symbol | " " ;
+
+number = "0" | "1" | "2" | "3" | "4" | "5" | "6"
+       | "7" | "8" | "9" ;
+
+endl = "\n" ;
+
+s = { " " } ;
+
+ident = "  " ;
+
+type = "int"
+     | "string" ;
+
+identifier = letter , { letter | digit | "_" } ;
+
+integer = number, { number } ;
+
+string = "'", { character }, "'"
+       | '"', { character }, '"' ;
+
+comment = s, "//", { character } ;
+
+inline_arithmetic_factor = ( integer
+                         | string
+                         | identifier, [ call ]
+                         | "(", inline_boolean_expression, ")"
+                         | ( { "+" | "-" }, inline_arithmetic_factor )
+                         ) ;
+
+inline_arithmetic_term = inline_arithmetic_factor, { s, ( "*" | "/" ), s, inline_arithmetic_factor } ;
+
+inline_arithmetic_expression = inline_arithmetic_term, { s, ( "+" | "-" ), s, inline_arithmetic_term } ;
+
+inline_boolean_factor = inline_arithmetic_expression, { s, "and", s, inline_arithmetic_expression } ;
+
+inline_boolean_term = inline_boolean_factor, { s, "or", s, inline_boolean_factor } ;
+
+inline_boolean_expression = inline_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, inline_boolean_term } ;
+
+inline_conditional_expression = inline_boolean_expression, [ s, "?", s, inline_conditional_expression, s, ":", s, inline_conditional_expression ] ;
+
+inline_expression = type, identifier, ["=", inline_conditional_expression ]
+                  | inline_conditional_expression ;
+
+call = "(", inline_expression, { ";", s, inline_expression }, ")" ;
+
+block_arithmetic_factor = ( integer
+                        | string
+                        | identifier, [ call, [ s, block ] ]
+                        | "(", s, block_boolean_expression, s, ")"
+                        | ( { "+" | "-" }, block_arithmetic_factor )
+                        ) ;
+
+block_arithmetic_term = block_arithmetic_factor, { s, ( "*" | "/" ), block_arithmetic_factor } ;
+
+block_arithmetic_expression = block_arithmetic_term, { s, ( "+" | "-" ), s, block_arithmetic_term } ;
+
+block_boolean_factor = block_arithmetic_expression, { s, "and", s, block_arithmetic_expression } ;
+
+block_boolean_term = block_boolean_factor, { s, "or", s, block_boolean_factor } ;
+
+block_boolean_expression = block_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, block_boolean_term } ;
+
+block_expression = [ type, s, identifier, s, "=", s ], block_boolean_expression, { s, block_boolean_expression } ;
+
+statement = [ block_expression | block ], { s, block_expression | block }, [ comment ], endl ;
+
+block = "{", [ comment ], endl, { ident, statement }, "}" ;
+
+method = type, identifier, call, block ;
+
+file = { statement };
