@@ -62,7 +62,8 @@ inline_expression = type, identifier, ["=", inline_conditional_expression ]
 
 call = "(", [ "ref", s ], inline_expression, { ";", s, [ "ref", s ], inline_expression }, ")" ;
 
-block_arithmetic_factor = ( integer
+block_arithmetic_factor = ( "NULL"
+                        | integer
                         | string
                         | identifier, [ call, [ s, block ] ]
                         | "(", s, block_boolean_expression, s, ")"
