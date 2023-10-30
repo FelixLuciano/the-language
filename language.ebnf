@@ -22,7 +22,7 @@ number = "0" | "1" | "2" | "3" | "4" | "5" | "6"
 
 endl = "\n" ;
 
-s = { " " } ;
+s = " ", { " " } ;
 
 ident = "  " ;
 
@@ -49,9 +49,9 @@ inline_arithmetic_term = inline_arithmetic_factor, { s, ( "*" | "/" ), s, inline
 
 inline_arithmetic_expression = inline_arithmetic_term, { s, ( "+" | "-" ), s, inline_arithmetic_term } ;
 
-inline_boolean_factor = inline_arithmetic_expression, { s, "and", s, inline_arithmetic_expression } ;
+inline_boolean_factor = inline_arithmetic_expression, { s, "&&", s, inline_arithmetic_expression } ;
 
-inline_boolean_term = inline_boolean_factor, { s, "or", s, inline_boolean_factor } ;
+inline_boolean_term = inline_boolean_factor, { s, "||", s, inline_boolean_factor } ;
 
 inline_boolean_expression = inline_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, inline_boolean_term } ;
 
@@ -73,9 +73,9 @@ block_arithmetic_term = block_arithmetic_factor, { s, ( "*" | "/" ), block_arith
 
 block_arithmetic_expression = block_arithmetic_term, { s, ( "+" | "-" ), s, block_arithmetic_term } ;
 
-block_boolean_factor = block_arithmetic_expression, { s, "and", s, block_arithmetic_expression } ;
+block_boolean_factor = block_arithmetic_expression, { s, "&&", s, block_arithmetic_expression } ;
 
-block_boolean_term = block_boolean_factor, { s, "or", s, block_boolean_factor } ;
+block_boolean_term = block_boolean_factor, { s, "||", s, block_boolean_factor } ;
 
 block_boolean_expression = block_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, block_boolean_term } ;
 
@@ -83,8 +83,8 @@ block_expression = [ type, s, identifier, s, "=", s ], block_boolean_expression,
 
 statement = [ block_expression | block ], { s, block_expression | block }, [ comment ], endl ;
 
-block = "{", [ comment ], endl, { ident, statement }, "}" ;
+block = "{", [ comment ], endl, { ident, [ "return", s ], statement }, "}" ;
 
-method = type, identifier, call, block ;
+method = type, s, identifier, call, s, block ;
 
 file = { statement };
