@@ -60,7 +60,7 @@ inline_conditional_expression = inline_boolean_expression, [ s, "?", s, inline_c
 inline_expression = type, identifier, ["=", inline_conditional_expression ]
                   | inline_conditional_expression ;
 
-call = "(", inline_expression, { ";", s, inline_expression }, ")" ;
+call = "(", [ "ref", s ], inline_expression, { ";", s, [ "ref", s ], inline_expression }, ")" ;
 
 block_arithmetic_factor = ( integer
                         | string
