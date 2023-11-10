@@ -2,18 +2,20 @@
 #include <stdio.h>
 extern FILE *yyin;
 extern int yylex (void);
-void yyerror (char const *);
+extern void yyerror (char const *);
 extern int yyparse();
 extern int yylval;
 %}
 
-%token ENDL
-%token IDENT
-%token KEYWORD
-%token TYPE
+%debug
+
 %token IDENTIFIER
-%token STRING
 %token INTEGER
+%token COMMENT
+%token RETURN
+%token REF
+%token NULLE
+%token TYPE
 %token SEPARATOR
 %token OP_PLUS
 %token OP_MINUS
@@ -34,6 +36,7 @@ extern int yylval;
 %token ASSIGN_DIV
 %token TERNARY_QUESTION
 %token TERNARY_COLON
+%token ENDL
 
 %left OP_MULT OP_DIV
 %left OP_PLUS OP_MINUS
@@ -44,24 +47,24 @@ extern int yylval;
 
 %%
 
-statement_list: statement ENDL statement_list
-              | statement ENDL
-              | statement
+statement_list:
+              | statement statement_list { printf("Oi"); }
               ;
 
-statement: KEYWORD conditional_expression
-         | conditional_expression
+statement: conditional_expression ENDL
+         | RETURN conditional_expression ENDL
+         | error { fprintf(stderr, "STATEMENT\n"); yyerrok; }
          ;
 
-expression_list: conditional_expression ',' expression_list
-               | conditional_expression
+expression_list: conditional_expression
+               | conditional_expression ',' expression_list
                ;
 
-conditional_expression: expression TERNARY_QUESTION conditional_expression TERNARY_COLON conditional_expression
-                      | expression
+conditional_expression: expression
+                      | expression TERNARY_QUESTION conditional_expression TERNARY_COLON conditional_expression
                       ;
 
-expression: '(' expression ')'
+expression: factor
           | factor OP_MULT expression
           | factor OP_DIV expression
           | factor OP_PLUS expression
@@ -74,17 +77,18 @@ expression: '(' expression ')'
           | factor OP_LOWER expression
           | factor OP_GREATER_EQUAL expression
           | factor OP_LOWER_EQUAL expression
-          | factor
+          | '(' expression ')'
           ;
 
-call: '(' expression_list ')'
-    | '(' ')'
+call: '(' ')'
+    | '(' expression_list ')'
+              | error { fprintf(stderr, "CALL\n"); yyerrok; }
     ;
 
 factor: INTEGER
-      | STRING
       | IDENTIFIER
       | IDENTIFIER call
+      | error { fprintf(stderr, "FACTOR\n"); yyerrok; }
       ;
 
 %%
