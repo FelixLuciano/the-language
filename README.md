@@ -55,6 +55,14 @@ for(int i = 0; i < 5; i = i + 1) {
 }
 ```
 
+## Getting Started
+
+```sh
+$ sudo apt install flex bison
+$ make
+$ make test
+```
+
 ## License
 
 This project is MIT licensed. [See more](LICENSE).
