@@ -1,5 +1,5 @@
 %{
-#include "../build/parser.tab.h"
+#include "parser.tab.h"
 %}
 
 SPACE           [ ]

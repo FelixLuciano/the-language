@@ -12,6 +12,10 @@ int yyerror(const char* s) {
     return 0;
 }
 
+int yywrap() {
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);

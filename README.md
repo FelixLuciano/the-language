@@ -55,12 +55,25 @@ for(int i = 0; i < 5; i = i + 1) {
 }
 ```
 
+## Dependencies
+
+- [CMake](https://cmake.org/download/)
+- [Flex](https://github.com/westes/flex)
+- [Bison](https://www.gnu.org/software/bison/)
+
 ## Getting Started
 
 ```sh
-$ sudo apt install flex bison
+$ mkdir build
+$ cd build
+$ cmake..
 $ make
-$ make test
+```
+
+## Execute
+
+```sh
+$ ./build/the-language ./example/calculator.txt
 ```
 
 ## License
