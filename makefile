@@ -1,4 +1,4 @@
-EXECUTABLE = parse
+EXECUTABLE = thec
 CC = gcc
 CFLAGS =
 
@@ -7,9 +7,9 @@ CFLAGS =
 all: build
 
 build: src/**
-	flex -o build/lex.yy.c src/lexer.l
-	bison -o build/y.tab.c -d src/parser.y -Wcounterexamples
-	$(CC) $(CFLAGS) -o build/$(EXECUTABLE) build/lex.yy.c build/y.tab.c src/main.c -lfl
+	bison --debug -o build/parser.tab.c -d src/parser.y -Wcounterexamples
+	flex -o build/lexer.yy.c src/lexer.l
+	$(CC) $(CFLAGS) -o bin/$(EXECUTABLE) build/parser.tab.c build/lexer.yy.c src/main.c -lfl
 
 test:
-	./build/$(EXECUTABLE) example/calculator.txt
+	./bin/$(EXECUTABLE) example/calculator.txt
