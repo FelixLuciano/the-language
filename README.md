@@ -73,7 +73,7 @@ $ make
 ## Execute
 
 ```sh
-$ ./build/the-language ./example/calculator.txt
+$ ./build/the-language ./example/calculator.txt > calculator.out
 ```
 
 ## License
