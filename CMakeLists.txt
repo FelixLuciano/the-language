@@ -5,18 +5,15 @@ project(the-language)
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
+# Set up source files
 set(SOURCE_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.c
     ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.c
-    src/parser.y
-    src/lexer.l
     src/main.c
 )
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lfl")
-
 # Flex and Bison targets
-BISON_TARGET(Parser src/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.c COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/parser.tab.h -Wcounterexamples")
+BISON_TARGET(Parser src/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.c COMPILE_FLAGS "-Wcounterexamples")
 FLEX_TARGET(Lexer src/lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.c)
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
