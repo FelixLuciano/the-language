@@ -10,82 +10,70 @@ lower = "a" | "b" | "c" | "d" | "e" | "f" | "g"
 
 letter = upper | lower ;
 
-symbol = "!" | "@" | "#" | "$" | "%" | "&" | "*"
-       | "(" | ")" | "[" | "]" | "{" | "}" | "-"
-       | "_" | "=" | "+" | "," | "." | ";" | "<"
-       | ">" | ":" | "?" | "/" | "\" | "|" | "?" ;
+symbol = "_" ;
 
 character = letter | symbol | " " ;
 
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6"
       | "7" | "8" | "9" ;
 
-endl = "\n" ;
-
-s = " ", { " " } ;
-
-ident = "  " ;
-
-type = "int"
-     | "string" ;
-
 identifier = letter , { letter | digit | "_" } ;
 
 integer = number, { number } ;
 
-string = "'", { character }, "'"
-       | '"', { character }, '"' ;
+string = '"', { character }, '"' ;
 
-comment = s, "//", { character } ;
+comment = "//", { [^\n] } ;
 
-inline_arithmetic_factor = ( integer
-                         | string
-                         | identifier, [ call ]
-                         | "(", inline_boolean_expression, ")"
-                         | ( { "+" | "-" }, inline_arithmetic_factor )
-                         ) ;
+program = { statement_sequence } ;
 
-inline_arithmetic_term = inline_arithmetic_factor, { s, ( "*" | "/" ), s, inline_arithmetic_factor } ;
+block = "{", "\n", statement_sequence, "}" ;
 
-inline_arithmetic_expression = inline_arithmetic_term, { s, ( "+" | "-" ), s, inline_arithmetic_term } ;
+statement_sequence = [ statement ], { "\n", statement } ;
 
-inline_boolean_factor = inline_arithmetic_expression, { s, "&&", s, inline_arithmetic_expression } ;
+statement = block_statement
+          | inline_statement ;
 
-inline_boolean_term = inline_boolean_factor, { s, "||", s, inline_boolean_factor } ;
+block_statement = block_expression_chain
+                | identifier, identifier, "=", block_expression_chain
+                | identifier, ( "=" | "+=" | "-=" | "*=" | "/=" ), block_expression_chain
+                | identifier, identifier, "(", [ function_interface ], ")", block
+                | "return", expression_chain ;
 
-inline_boolean_expression = inline_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, inline_boolean_term } ;
+expression_chain = block_expression_chain
+                 | inline_expression_chain ;
 
-inline_conditional_expression = inline_boolean_expression, [ s, "?", s, inline_conditional_expression, s, ":", s, inline_conditional_expression ] ;
+block_expression_chain = [ IDENTIFIER, call ], block, { "else", [ IDENTIFIER, call ], block } ;
 
-inline_expression = type, identifier, ["=", inline_conditional_expression ]
-                  | inline_conditional_expression ;
+inline_statement = inline_expression_chain
+                 | identifier, identifier, [assign, inline_expression_chain]
+                 | identifier, ( "=" | "+=" | "-=" | "*=" | "/=" ), inline_expression_chain ;
 
-call = "(", [ "ref", s ], inline_expression, { ";", s, [ "ref", s ], inline_expression }, ")" ;
+inline_expression_chain = expression, { "else", expression } ;
 
-block_arithmetic_factor = ( "NULL"
-                        | integer
-                        | string
-                        | identifier, [ call, [ s, block ] ]
-                        | "(", s, block_boolean_expression, s, ")"
-                        | ( { "+" | "-" }, block_arithmetic_factor )
-                        ) ;
+expression = conditional_expression, [ "?", expression, ":", expression ] ;
 
-block_arithmetic_term = block_arithmetic_factor, { s, ( "*" | "/" ), block_arithmetic_factor } ;
+conditional_expression = expression_term, { ( "==", "!=", ">", ">=", "<", "<=" ),  expression_term } ;
 
-block_arithmetic_expression = block_arithmetic_term, { s, ( "+" | "-" ), s, block_arithmetic_term } ;
+expression_term = expression_factor, { "||", expression_factor } ;
 
-block_boolean_factor = block_arithmetic_expression, { s, "&&", s, block_arithmetic_expression } ;
+expression_factor = expression_summand, { "&&", expression_summand } ;
 
-block_boolean_term = block_boolean_factor, { s, "||", s, block_boolean_factor } ;
+expression_summand =  expression_product, { ( "+" | "-" ),  expression_product } ;
 
-block_boolean_expression = block_boolean_term, { s, ( "==" | "!=" | ">" | "<" | ">=" | "<=" ), s, block_boolean_term } ;
+expression_product = factor, { ( "*" | "/" ), factor }
+                   | "(", expression, ")" ;
 
-block_expression = [ type, s, identifier, s, "=", s ], block_boolean_expression, { s, block_boolean_expression } ;
+factor = integer
+       | string
+       | identifier, [ call ]
+       | block, "(", ")" ;
 
-statement = [ block_expression | block ], { s, block_expression | block }, [ comment ], endl ;
+call = "(", [ call_expression_sequence ], ")" ;
 
-block = "{", [ comment ], endl, { ident, [ "return", s ], statement }, "}" ;
+call_expression_sequence = inline_statement, { ";" inline_statement } ;
 
-method = type, s, identifier, call, s, block ;
+function_interface = function_interface_item, { ";" function_interface_item } ;
 
-file = { statement };
+function_interface_item = identifier, identifier, [ "=", conditional_expression ]
+                        | ref, identifier, identifier ;

@@ -2,137 +2,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern FILE *yyin;
 extern int yylex (void);
 extern int yyerror (char const *);
-extern int yyparse();
-
-struct Node {
-    char* type;
-    char* value;
-    struct NodeChildren* children;
-};
-
-struct NodeChildren {
-    struct Node* node;
-    struct NodeChildren* next;
-};
-
-struct Node* createNode(char* type, char* value) {
-    struct Node* newNode = malloc(sizeof(struct Node));
-
-    newNode->type = type;
-    newNode->value = value;
-    newNode->children = NULL;
-
-    return newNode;
-}
-
-struct NodeChildren* createChildren(struct Node* node) {
-    struct NodeChildren* children = malloc(sizeof(struct NodeChildren));
-
-    children->node = node;
-    children->next = NULL;
-
-    return children;
-}
-
-void pushChildren(struct Node* tree, struct Node* node) {
-    struct NodeChildren* children = createChildren(node);
-
-    if (tree->children == NULL) {
-        tree->children = children;
-
-        return;
-    }
-
-    struct NodeChildren* last;
-    for (last = tree->children; last->next != NULL; last = last->next);
-
-    last->next = children;
-}
-
-void mergeChildren(struct NodeChildren* tree, struct NodeChildren* children) {
-    if (children == NULL) {
-        return;
-    }
-
-    tree->next = children;
-}
-
-void ident(int size) {
-    for (; size > 0; size--) {
-        printf("  ");
-    }
-}
-
-void display(struct Node* tree, int deep) {
-    ident(deep);
-    printf("%s(\"%s\", [", tree->type, tree->value);
-
-    if (tree->children != NULL) {
-        printf("\n");
-    }
-
-    for (struct NodeChildren* children = tree->children; children != NULL; children = children->next) {
-        display(children->node, deep+1);
-
-        if (children->next != NULL) {
-            printf(",\n");
-        }
-        else {
-            printf("\n");
-            ident(deep);
-        }
-    }
-
-    printf("])");
-
-    if (deep == 0) {
-        printf("\n");
-    }
-}
-
-struct Node* parseBlock(char* type, char* value, struct NodeChildren* children) {
-    struct Node* node = createNode(type, value);
-    
-    node->children = children;
-
-    return node;
-}
-
-struct Node* parseBinaryOperation(char* operator, struct Node* x, struct Node* y) {
-    struct Node* node = createNode("Binary_operation", operator);
-
-    pushChildren(node, x);
-    pushChildren(node, y);
-
-    return node;
-}
-
-struct Node* parseTernaryOperation(struct Node* condition, struct Node* a, struct Node* b) {
-    struct Node* node = createNode("Ternary_operation", "None");
-
-    pushChildren(node, condition);
-    pushChildren(node, a);
-    pushChildren(node, b);
-
-    return node;
-}
 
 %}
 
-%union {
-    char* value;
-    struct Node* node;
-    struct NodeChildren* children;
+%code requires {
+    #include "ast.h"
 }
 
-%token <value> IDENTIFIER INTEGER
-%token <value> OP_PLUS OP_MINUS OP_MULT OP_DIV OP_AND OP_OR OP_EQUAL OP_NOT_EQUAL OP_GREATER OP_LOWER OP_GREATER_EQUAL OP_LOWER_EQUAL ASSIGN ASSIGN_PLUS ASSIGN_MINUS ASSIGN_MULT ASSIGN_DIV
-%token COMMENT
-%token RETURN REF
-%token SEPARATOR ENDL
+%union {
+    char* value;
+    Node_t* node;
+    NodeList_t* children;
+}
+
+%token <value> IDENTIFIER INTEGER STRING
+%token <value> OP_PLUS OP_MINUS OP_MULT OP_DIV OP_AND OP_OR OP_COMPARE OP_ASSIGN
+%token ELSE RETURN REF BLOCK
+%token ASSIGN SEPARATOR ENDL
 %token TERNARY_QUESTION TERNARY_COLON
 %token OPEN_BRACES CLOSE_BRACES
 %token OPEN_PARENTHESIS CLOSE_PARENTHESIS
@@ -141,87 +29,130 @@ struct Node* parseTernaryOperation(struct Node* condition, struct Node* a, struc
 %left OP_PLUS OP_MINUS
 %left OP_AND
 %left OP_OR
-%left OP_EQUAL OP_NOT_EQUAL OP_GREATER OP_LOWER OP_GREATER_EQUAL OP_LOWER_EQUAL
+%left OP_COMPARE
 %left TERNARY_QUESTION TERNARY_COLON
 
-%type <node> factor expression conditional_expression expression_term expression_factor expression_summand expression_product statement program
-%type <children> statement_list block expression_list call
+%type <node> program block statement block_statement inline_statement function_interface_item
+%type <node> expression conditional_expression expression_term expression_factor expression_summand expression_product factor
+%type <children> statement_sequence expression_chain block_expression_chain inline_expression_chain function_interface call call_expression_sequence
 
 %%
 
-program: statement_list { $$ = parseBlock("Block", "None", $1); display($$, 0); }
-
-block:
-  OPEN_BRACES CLOSE_BRACES                   { $$ = NULL; }
-| OPEN_BRACES statement_list CLOSE_BRACES    { $$ = $2; }
+program
+: statement_sequence    { $$ = parseBlock("Block", NULL, $1); display($$, 0); destroyNode($$); }
 ;
 
-statement_list:
-  %empty                            { $$ = NULL; }
-| statement                         { $$ = createChildren($1); }
-| ENDL statement_list               { $$ = $2; }
-| statement ENDL statement_list     { $$ = createChildren($1); mergeChildren($$, $3); }
+block
+: OPEN_BRACES ENDL statement_sequence CLOSE_BRACES          { $$ = parseBlock("Block", NULL, $3); }
 ;
 
-statement:
-  expression                    { $$ = $1; }
-| expression COMMENT            { $$ = $1; }
-| RETURN expression             { $$ = createNode("Return", "None"); pushChildren($$, $2); }
-| RETURN expression COMMENT     { $$ = createNode("Return", "None"); pushChildren($$, $2); }
+statement_sequence
+: %empty                                { $$ = NULL; }
+| statement                             { $$ = createChild($1); }
+| ENDL statement_sequence               { $$ = $2; }
+| statement ENDL statement_sequence     { $$ = createChild($1); mergeChildren($$, $3); }
 ;
 
-expression_list:
-  expression                                { $$ = createChildren($1); }
-| expression SEPARATOR expression_list      { $$ = createChildren($1); mergeChildren($$, $3); }
+statement
+: block_statement   { $$ = $1; }
+| inline_statement  { $$ = $1; }
 ;
 
-expression:
-  conditional_expression                                                        { $$ = $1; }
+block_statement
+: block_expression_chain                                                                { $$ = parseStatement($1); }
+| IDENTIFIER IDENTIFIER ASSIGN block_expression_chain                                   { $$ = parseDeclaration($1, $2, parseStatement($4)); }
+| IDENTIFIER ASSIGN block_expression_chain                                              { $$ = parseAssignment($1, NULL, $3); }
+| IDENTIFIER OP_ASSIGN block_expression_chain                                           { $$ = parseAssignment($1, $2, $3); }
+| IDENTIFIER IDENTIFIER OPEN_PARENTHESIS CLOSE_PARENTHESIS block                        { $$ = parseFunction($1, $2, NULL, $5); }
+| IDENTIFIER IDENTIFIER OPEN_PARENTHESIS function_interface CLOSE_PARENTHESIS block     { $$ = parseFunction($1, $2, $4, $6); }
+| RETURN expression_chain                                                               { $$ = createNode("Return", NULL); pushChild($$, parseStatement($2)); }
+;
+
+expression_chain
+: block_expression_chain    { $$ = $1; }
+| inline_expression_chain   { $$ = $1; }
+;
+
+block_expression_chain
+: block                                                 { $$ = createChild($1); }
+| block ELSE block_expression_chain                     { $$ = createChild($1); mergeChildren($$, $3); }
+| IDENTIFIER call block                                 { $$ = createChild(parseBlock("Call", $1, $2)); pushChild($$->node, $3); }
+| IDENTIFIER call block ELSE block_expression_chain     { $$ = createChild(parseBlock("Call", $1, $2)); pushChild($$->node, $3); mergeChildren($$, $5); }
+;
+
+inline_statement
+: inline_expression_chain                                   { $$ = parseStatement($1); }
+| IDENTIFIER IDENTIFIER                                     { $$ = parseDeclaration($1, $2, NULL); }
+| IDENTIFIER IDENTIFIER ASSIGN inline_expression_chain      { $$ = parseDeclaration($1, $2, parseStatement($4)); }
+| IDENTIFIER ASSIGN inline_expression_chain                 { $$ = parseAssignment($1, NULL, $3); }
+| IDENTIFIER OP_ASSIGN inline_expression_chain              { $$ = parseAssignment($1, $2, $3); }
+;
+
+inline_expression_chain
+: expression                                { $$ = createChild($1); }
+| expression ELSE inline_expression_chain   { $$ = createChild($1); mergeChildren($$, $3); }
+;
+
+expression
+: conditional_expression                                                        { $$ = $1; }
 | conditional_expression TERNARY_QUESTION expression TERNARY_COLON expression   { $$ = parseTernaryOperation($1, $3, $5); }
 ;
 
-conditional_expression:
-  expression_term                                       { $$ = $1; }
-| expression_term OP_EQUAL expression_term              { $$ = parseBinaryOperation($2, $1, $3); }
-| expression_term OP_NOT_EQUAL expression_term          { $$ = parseBinaryOperation($2, $1, $3); }
-| expression_term OP_GREATER expression_term            { $$ = parseBinaryOperation($2, $1, $3); }
-| expression_term OP_LOWER expression_term              { $$ = parseBinaryOperation($2, $1, $3); }
-| expression_term OP_GREATER_EQUAL expression_term      { $$ = parseBinaryOperation($2, $1, $3); }
-| expression_term OP_LOWER_EQUAL expression_term        { $$ = parseBinaryOperation($2, $1, $3); }
+conditional_expression
+: expression_term                                       { $$ = $1; }
+| expression_term OP_COMPARE expression_term            { $$ = parseBinaryOperation($2, $1, $3); }
 ;
 
-expression_term:
-  expression_factor                         { $$ = $1; }
+expression_term
+: expression_factor                         { $$ = $1; }
 | expression_factor OP_OR expression_term   { $$ = parseBinaryOperation($2, $1, $3); }
 ;
 
-expression_factor:
-  expression_summand                                { $$ = $1; }
+expression_factor
+: expression_summand                                { $$ = $1; }
 | expression_summand OP_AND expression_factor       { $$ = parseBinaryOperation($2, $1, $3); }
 ;
 
-expression_summand:
-  expression_product                                { $$ = $1; }
+expression_summand
+: expression_product                                { $$ = $1; }
 | expression_product OP_PLUS expression_summand     { $$ = parseBinaryOperation($2, $1, $3); }
 | expression_product OP_MINUS expression_summand    { $$ = parseBinaryOperation($2, $1, $3); }
 ;
 
-expression_product:
-  factor                                            { $$ = $1; }
+expression_product
+: factor                                            { $$ = $1; }
 | factor OP_MULT expression_product                 { $$ = parseBinaryOperation($2, $1, $3); }
 | factor OP_DIV expression_product                  { $$ = parseBinaryOperation($2, $1, $3); }
 | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS     { $$ = $2; }
 ;
 
-call:
-  OPEN_PARENTHESIS CLOSE_PARENTHESIS                    { $$ = NULL; }
-| OPEN_PARENTHESIS expression_list CLOSE_PARENTHESIS    { $$ = $2; }
+factor
+: INTEGER                                   { $$ = createNode("Integer", $1); }
+| STRING                                    { $$ = createNode("String", $1); }
+| IDENTIFIER                                { $$ = createNode("Identifier", $1); }
+| IDENTIFIER call                           { $$ = parseBlock("Call", $1, $2); pushChild($$, createNode("No_operation", NULL)); }
+| BLOCK OPEN_PARENTHESIS CLOSE_PARENTHESIS  { $$ = createNode("Identifier", "block"); }
 ;
 
-factor:
-  INTEGER           { $$ = createNode("Integer", $1); }
-| IDENTIFIER        { $$ = createNode("Identifier", $1); }
-| IDENTIFIER call   { $$ = parseBlock("Call", $1, $2); }
+call
+: OPEN_PARENTHESIS CLOSE_PARENTHESIS                            { $$ = NULL; }
+| OPEN_PARENTHESIS call_expression_sequence CLOSE_PARENTHESIS   { $$ = $2; }
+;
+
+call_expression_sequence
+: inline_statement                                      { $$ = createChild($1); }
+| inline_statement SEPARATOR call_expression_sequence   { $$ = createChild($1); mergeChildren($$, $3); }
+;
+
+function_interface
+: function_interface_item                               { $$ = createChild($1); }
+| function_interface_item SEPARATOR function_interface  { $$ = createChild($1); mergeChildren($$, $3); }
+;
+
+function_interface_item
+: IDENTIFIER IDENTIFIER                                 { $$ = parseDeclaration($1, $2, NULL); }
+| IDENTIFIER IDENTIFIER ASSIGN conditional_expression   { $$ = parseDeclaration($1, $2, $4); }
+| REF IDENTIFIER IDENTIFIER                             { $$ = createNode("Ref", NULL); pushChild($$, parseDeclaration($2, $3, NULL)); }
 ;
 
 %%
