@@ -10,25 +10,20 @@
 ```c
 int a = NULL
 int b = 2
-int c = a b
-// Expression fallback -> c = 2
+int c = a else b  // c = 2
 
 int d = {
     return 10
 }
 
 int if(int condition = false) {
-    return condition ? block : NULL
-}
-
-int else() {
-    return block
+    return condition ? block() : NULL
 }
 
 {
     int e = if(true) {
         return 1
-    } else() {
+    } else {
         return 0
     }
 
@@ -39,19 +34,24 @@ int else() {
 Println(e)
 
 int while(ref int condition) {
-    int value = block
-    return condition ? while(condition) : value
+    int value = NULL
+
+    return if(condition) {
+        value = block()
+
+        return while(condition)
+    } else value
 }
 
 int for(int declare; ref int condition; ref int step) {
     return while(condition) {
         step
-        return block
+        return block()
     }
 }
 
-for(int i = 0; i < 5; i = i + 1) {
-    Println(i);
+for(int i = 0; i < 5; i += 1) {
+    Println(i)
 }
 ```
 
@@ -73,7 +73,7 @@ $ make
 ## Execute
 
 ```sh
-$ ./build/the-language ./example/calculator.txt > calculator.out
+$ ./build/the-language ./example/example.the > example.out
 ```
 
 ## License

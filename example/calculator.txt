@@ -1,2 +1,0 @@
-return 1 + 2 > 2 ? a : b       // oi
-print(1+2; 3 + 4)
