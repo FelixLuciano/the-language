@@ -1,5 +1,7 @@
 %{
-#include "parser.tab.h"
+    #include "parser.tab.hpp"
+    #include <string>
+    extern "C" int yywrap();
 %}
 
 SPACE           [ ]
@@ -13,28 +15,28 @@ COMMENT         \/\/[^\n]*
 return          { return RETURN; }
 ref             { return REF; }
 block           { return BLOCK; }
-NULL            { yylval.value = "NULL"; return IDENTIFIER; }
-int             { yylval.value = "int"; return IDENTIFIER; }
-void            { yylval.value = "void"; return IDENTIFIER; }
+NULL            { yylval.string = "NULL"; return IDENTIFIER; }
+int             { yylval.string = "int"; return IDENTIFIER; }
+void            { yylval.string = "void"; return IDENTIFIER; }
 else            { return ELSE; }
 \;              { return SEPARATOR; }
-\+              { yylval.value = "+"; return OP_PLUS; }
-\-              { yylval.value = "-"; return OP_MINUS; }
-\*              { yylval.value = "*"; return OP_MULT; }
-\/              { yylval.value = "/"; return OP_DIV; }
-\&\&            { yylval.value = "&&"; return OP_AND; }
-\|\|            { yylval.value = "||"; return OP_OR; }
-\=\=            { yylval.value = "=="; return OP_COMPARE; }
-\!\=            { yylval.value = "!="; return OP_COMPARE; }
-\>              { yylval.value = ">"; return OP_COMPARE; }
-\<              { yylval.value = "<"; return OP_COMPARE; }
-\>\=            { yylval.value = ">="; return OP_COMPARE; }
-\<\=            { yylval.value = "<="; return OP_COMPARE; }
+\+              { yylval.string = "+"; return OP_PLUS; }
+\-              { yylval.string = "-"; return OP_MINUS; }
+\*              { yylval.string = "*"; return OP_MULT; }
+\/              { yylval.string = "/"; return OP_DIV; }
+\&\&            { yylval.string = "&&"; return OP_AND; }
+\|\|            { yylval.string = "||"; return OP_OR; }
+\=\=            { yylval.string = "=="; return OP_COMPARE; }
+\!\=            { yylval.string = "!="; return OP_COMPARE; }
+\>              { yylval.string = ">"; return OP_COMPARE; }
+\<              { yylval.string = "<"; return OP_COMPARE; }
+\>\=            { yylval.string = ">="; return OP_COMPARE; }
+\<\=            { yylval.string = "<="; return OP_COMPARE; }
 \=              { return ASSIGN; }
-\+\=            { yylval.value = "+"; return OP_ASSIGN; }
-\-\=            { yylval.value = "-"; return OP_ASSIGN; }
-\*\=            { yylval.value = "*"; return OP_ASSIGN; }
-\/\=            { yylval.value = "/"; return OP_ASSIGN; }
+\+\=            { yylval.string = "+"; return OP_ASSIGN; }
+\-\=            { yylval.string = "-"; return OP_ASSIGN; }
+\*\=            { yylval.string = "*"; return OP_ASSIGN; }
+\/\=            { yylval.string = "/"; return OP_ASSIGN; }
 \?              { return TERNARY_QUESTION; }
 \:              { return TERNARY_COLON; }
 \{              { return OPEN_BRACES; }
@@ -43,9 +45,9 @@ else            { return ELSE; }
 \)              { return CLOSE_PARENTHESIS; }
 [\n]            { return ENDL; }
 {COMMENT}       ;
-{INTEGER}       { yylval.value = strdup(yytext); return INTEGER; }
-{IDENTIFIER}    { yylval.value = strdup(yytext); return IDENTIFIER; }
-{STRING}        { yylval.value = strndup(yytext+1, yyleng-2); return STRING; }
+{INTEGER}       { yylval.string = std::string(yytext, yyleng); return INTEGER; }
+{IDENTIFIER}    { yylval.string = std::string(yytext, yyleng); return IDENTIFIER; }
+{STRING}        { yylval.string = std::string(yytext+1, yyleng-2); return STRING; }
 {SPACE}         ;  // Ignore whitespace
 
 %%

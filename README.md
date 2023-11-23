@@ -60,6 +60,7 @@ for(int i = 0; i < 5; i += 1) {
 - [CMake](https://cmake.org/download/)
 - [Flex](https://github.com/westes/flex)
 - [Bison](https://www.gnu.org/software/bison/)
+- [LLVM](https://apt.llvm.org/)
 
 ## Getting Started
 

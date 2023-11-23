@@ -24,11 +24,15 @@ int if(int condition = false) {
 Println(e)
 
 int while(ref int condition) {
+    int value = NULL
+
     return if(condition) {
-        block()
+        value = block()
 
         return while(condition)
-    } else NULL
+    } else {
+        return value
+    }
 }
 
 int for(int declare; ref int condition; ref int step) {
