@@ -15,6 +15,7 @@ set(SOURCE_FILES
 
 # Set include directories
 set(INCLUDE_DIRS
+    ${CMAKE_CURRENT_BINARY_DIR}
     src/
 )
 

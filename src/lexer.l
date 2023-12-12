@@ -12,7 +12,6 @@ COMMENT         \/\/[^\n]*
 
 return          { return RETURN; }
 ref             { return REF; }
-block           { return BLOCK; }
 NULL            { yylval.value = "NULL"; return IDENTIFIER; }
 int             { yylval.value = "int"; return IDENTIFIER; }
 void            { yylval.value = "void"; return IDENTIFIER; }

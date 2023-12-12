@@ -1,43 +1,26 @@
-int a = NULL
-int b = 2
-int c = a else b  // c = 2
+int main() {
+    int a = NULL
+    int b = 2
+    int c = a else b  // c = 2
 
-int d = {
-    return 10
-}
-
-int if(int condition = false) {
-    return condition ? block() : NULL
-}
-
-{
-    int e = if(true) {
-        return 1
-    } else {
-        return 0
+    int d = {
+        return 10
     }
 
-    // stdout "1"
+    int if(int condition = false) {
+        return condition ? block() : NULL
+    }
+
+    {
+        int e = if(true) {
+            return 1
+        } else {
+            return 0
+        }
+
+        // stdout "1"
+        Println(e)
+    }
+    // stderr: "ERROR: e was not defined"
     Println(e)
-}
-// stderr: "ERROR: 3 was not defined"
-Println(e)
-
-int while(ref int condition) {
-    return if(condition) {
-        block()
-
-        return while(condition)
-    } else NULL
-}
-
-int for(int declare; ref int condition; ref int step) {
-    return while(condition) {
-        step
-        return block()
-    }
-}
-
-for(int i = 0; i < 5; i += 1) {
-    Println(i)
 }

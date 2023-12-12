@@ -40,7 +40,9 @@ int while(ref int condition) {
         value = block()
 
         return while(condition)
-    } else value
+    } else {
+        return value
+    }
 }
 
 int for(int declare; ref int condition; ref int step) {
@@ -60,20 +62,27 @@ for(int i = 0; i < 5; i += 1) {
 - [CMake](https://cmake.org/download/)
 - [Flex](https://github.com/westes/flex)
 - [Bison](https://www.gnu.org/software/bison/)
+- [Python](https://www.python.org/downloads/)
 
 ## Getting Started
 
-```sh
-$ mkdir build
-$ cd build
-$ cmake..
-$ make
-```
+1. First, build the lexical analyzer:
+    ```sh
+    $ mkdir build
+    $ cd build
+    $ cmake..
+    $ make
+    ```
+2. Then install the interpreter:
+    ```sh
+    $ cd ..
+    $ pip install .
+    ```
 
 ## Execute
 
 ```sh
-$ ./build/the-language ./example/example.the > example.out
+$ ./build/the-language ./example/example.the
 ```
 
 ## License
