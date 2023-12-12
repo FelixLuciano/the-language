@@ -1,6 +1,11 @@
 %{
     #include "parser.tab.hpp"
     #include <string>
+
+    #define SAVE_STRING(value) (yylval.string = new std::string(value))
+    #define SAVE_YY_STRING yylval.string = new std::string(yytext, yyleng)
+    #define SAVE_YY_INTEGER SAVE_YY_STRING; yylval.integer = std::stoll(*yylval.string)
+
     extern "C" int yywrap();
 %}
 
@@ -15,28 +20,28 @@ COMMENT         \/\/[^\n]*
 return          { return RETURN; }
 ref             { return REF; }
 block           { return BLOCK; }
-NULL            { yylval.string = "NULL"; return IDENTIFIER; }
-int             { yylval.string = "int"; return IDENTIFIER; }
-void            { yylval.string = "void"; return IDENTIFIER; }
+NULL            { SAVE_STRING("NULL"); return IDENTIFIER; }
+int             { SAVE_STRING("int"); return IDENTIFIER; }
+void            { SAVE_STRING("void"); return IDENTIFIER; }
 else            { return ELSE; }
 \;              { return SEPARATOR; }
-\+              { yylval.string = "+"; return OP_PLUS; }
-\-              { yylval.string = "-"; return OP_MINUS; }
-\*              { yylval.string = "*"; return OP_MULT; }
-\/              { yylval.string = "/"; return OP_DIV; }
-\&\&            { yylval.string = "&&"; return OP_AND; }
-\|\|            { yylval.string = "||"; return OP_OR; }
-\=\=            { yylval.string = "=="; return OP_COMPARE; }
-\!\=            { yylval.string = "!="; return OP_COMPARE; }
-\>              { yylval.string = ">"; return OP_COMPARE; }
-\<              { yylval.string = "<"; return OP_COMPARE; }
-\>\=            { yylval.string = ">="; return OP_COMPARE; }
-\<\=            { yylval.string = "<="; return OP_COMPARE; }
+\+              { SAVE_STRING("+"); return OP_PLUS; }
+\-              { SAVE_STRING("-"); return OP_MINUS; }
+\*              { SAVE_STRING("*"); return OP_MULT; }
+\/              { SAVE_STRING("/"); return OP_DIV; }
+\&\&            { SAVE_STRING("&&"); return OP_AND; }
+\|\|            { SAVE_STRING("||"); return OP_OR; }
+\=\=            { SAVE_STRING("=="); return OP_COMPARE; }
+\!\=            { SAVE_STRING("!="); return OP_COMPARE; }
+\>              { SAVE_STRING(">"); return OP_COMPARE; }
+\<              { SAVE_STRING("<"); return OP_COMPARE; }
+\>\=            { SAVE_STRING(">="); return OP_COMPARE; }
+\<\=            { SAVE_STRING("<="); return OP_COMPARE; }
 \=              { return ASSIGN; }
-\+\=            { yylval.string = "+"; return OP_ASSIGN; }
-\-\=            { yylval.string = "-"; return OP_ASSIGN; }
-\*\=            { yylval.string = "*"; return OP_ASSIGN; }
-\/\=            { yylval.string = "/"; return OP_ASSIGN; }
+\+\=            { SAVE_STRING("+"); return OP_ASSIGN; }
+\-\=            { SAVE_STRING("-"); return OP_ASSIGN; }
+\*\=            { SAVE_STRING("*"); return OP_ASSIGN; }
+\/\=            { SAVE_STRING("/"); return OP_ASSIGN; }
 \?              { return TERNARY_QUESTION; }
 \:              { return TERNARY_COLON; }
 \{              { return OPEN_BRACES; }
@@ -45,9 +50,9 @@ else            { return ELSE; }
 \)              { return CLOSE_PARENTHESIS; }
 [\n]            { return ENDL; }
 {COMMENT}       ;
-{INTEGER}       { yylval.string = std::string(yytext, yyleng); return INTEGER; }
-{IDENTIFIER}    { yylval.string = std::string(yytext, yyleng); return IDENTIFIER; }
-{STRING}        { yylval.string = std::string(yytext+1, yyleng-2); return STRING; }
+{INTEGER}       { SAVE_YY_INTEGER; return INTEGER; }
+{IDENTIFIER}    { SAVE_YY_STRING; return IDENTIFIER; }
+{STRING}        { yylval.string = new std::string(yytext+1, yyleng-2); return STRING; }
 {SPACE}         ;  // Ignore whitespace
 
 %%

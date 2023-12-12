@@ -1,53 +1,26 @@
 %{
-    #include "ast.h"
+    #include "ast/abstract_node.h"
 
     extern int yylex();
     extern void yyerror(const char*);
-
-    # define YYLLOC_DEFAULT(Current, Rhs, N)                        \
-      do                                                            \
-      if (N)                                                        \
-        {                                                           \
-          (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;    \
-          (Current).first_column = YYRHSLOC (Rhs, 1).first_column;  \
-          (Current).last_line    = YYRHSLOC (Rhs, N).last_line;     \
-          (Current).last_column  = YYRHSLOC (Rhs, N).last_column;   \
-        }                                                           \
-      else                                                          \
-        {                                                           \
-          (Current).first_line   = (Current).last_line   =          \
-            YYRHSLOC (Rhs, 0).last_line;                            \
-          (Current).first_column = (Current).last_column =          \
-            YYRHSLOC (Rhs, 0).last_column;                          \
-        }                                                           \
-      while (0)
-
-    #define YYDEBUG 1
-    #define YYERROR_VERBOSE
 %}
 
-%code requires {  
+%code requires {
     #include <string>
 
-    union YYSTYPE {
-        std::string string;
-        
-        YYSTYPE() : string() {}
-
-        ~YYSTYPE() {}
-
-        YYSTYPE& operator=(const YYSTYPE& other) {
-            if (this != &other) {
-                string = other.string;
-            }
-            return *this;
-        }
-    };
+    #include "./ast/abstract_node.h"
 }
 
 %locations
 
-%token <string> IDENTIFIER INTEGER STRING
+%union {
+    int integer;
+    std::string *string;
+    ast::Node<void *> *node;
+}
+
+%token <integer> INTEGER
+%token <string> IDENTIFIER STRING
 %token <string> OP_PLUS OP_MINUS OP_MULT OP_DIV OP_AND OP_OR OP_COMPARE OP_ASSIGN
 %token ELSE RETURN REF BLOCK
 %token ASSIGN SEPARATOR ENDL
@@ -62,6 +35,7 @@
 %left OP_COMPARE
 %left TERNARY_QUESTION TERNARY_COLON
 
+%type <node> expression conditional_expression expression_term expression_factor expression_summand expression_product factor
 /* %type <node> program block statement block_statement inline_statement function_interface_item
 %type <node> expression conditional_expression expression_term expression_factor expression_summand expression_product factor
 %type <children> statement_sequence expression_chain block_expression_chain inline_expression_chain function_interface call call_expression_sequence */
@@ -132,38 +106,38 @@ expression
 
 conditional_expression
 : expression_term                                       
-| expression_term OP_COMPARE expression_term            { Node("Bin_op", "oi").display(); }
+| expression_term OP_COMPARE expression_term            { $$ = new ast::BinOp($2, $1, $3); }
 ;
 
 expression_term
 : expression_factor                         
-| expression_factor OP_OR expression_term   { Node("Bin_op", "oi").display(); }
+| expression_factor OP_OR expression_term   { $$ = new ast::BinOp($2, $1, $3); }
 ;
 
 expression_factor
 : expression_summand                                
-| expression_summand OP_AND expression_factor       { Node("Bin_op", "oi").display(); }
+| expression_summand OP_AND expression_factor       { $$ = new ast::BinOp($2, $1, $3); }
 ;
 
 expression_summand
 : expression_product                                
-| expression_product OP_PLUS expression_summand     { Node("Bin_op", "oi").display(); }
-| expression_product OP_MINUS expression_summand    { Node("Bin_op", "oi").display(); }
+| expression_product OP_PLUS expression_summand     { $$ = new ast::BinOp($2, $1, $3); }
+| expression_product OP_MINUS expression_summand    { $$ = new ast::BinOp($2, $1, $3); }
 ;
 
 expression_product
 : factor                                            
-| factor OP_MULT expression_product                 { Node("Bin_op", "oi").display(); }
-| factor OP_DIV expression_product                  { Node("Bin_op", "oi").display(); }
+| factor OP_MULT expression_product                 { $$ = new ast::BinOp($2, $1, $3); }
+| factor OP_DIV expression_product                  { $$ = new ast::BinOp($2, $1, $3); }
 | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS     
 ;
 
 factor
-: INTEGER                                   { Node("Integer", "oi").display(); }
-| STRING                                    { Node("String", "oi").display(); }
-| IDENTIFIER                                { Node("Identifier", "oi").display(); }
-| IDENTIFIER call                           { Node("Call", "oi").display(); }
-| BLOCK OPEN_PARENTHESIS CLOSE_PARENTHESIS  { Node("Identifier", "block").display(); }
+: INTEGER                                   { $$ = ast::Integer($1); }
+| STRING                                    { $$ = ast::String($1); }
+| IDENTIFIER                                { $$ = ast::String($1); }
+| IDENTIFIER call                           { $$ = ast::String("Call"); }
+| BLOCK OPEN_PARENTHESIS CLOSE_PARENTHESIS  { $$ = ast::String("Block"); }
 ;
 
 call

@@ -14,7 +14,7 @@ find_package(BISON REQUIRED)
 set(SOURCE_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cpp
-    src/ast.cpp
+    src/ast/abstract_node.cpp
     src/main.cpp
 )
 

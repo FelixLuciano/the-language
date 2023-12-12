@@ -1,10 +1,11 @@
 #include <iostream>
 #include "parser.tab.hpp"
 
+extern FILE *yyin;
+
 extern "C" {
     void yyrestart(FILE *input_file);
     extern char* yytext;
-    extern YYLTYPE yyloc;
 
     int yywrap() {
         return 1;

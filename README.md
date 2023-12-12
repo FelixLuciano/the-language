@@ -58,9 +58,9 @@ for(int i = 0; i < 5; i += 1) {
 ## Dependencies
 
 - [CMake](https://cmake.org/download/)
-- [Flex](https://github.com/westes/flex)
-- [Bison](https://www.gnu.org/software/bison/)
-- [LLVM](https://apt.llvm.org/)
+- [Flex v2.6](https://github.com/westes/flex)
+- [Bison v3.8](https://www.gnu.org/software/bison/)
+- [LLVM 18](https://apt.llvm.org/)
 
 ## Getting Started
 
