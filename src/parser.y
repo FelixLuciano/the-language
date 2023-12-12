@@ -1,15 +1,18 @@
-%{
-#include <stdio.h>
-#include <stdlib.h>
-
-extern int yylex (void);
-extern int yyerror (char const *);
-
-%}
-
 %code requires {
     #include "ast.h"
 }
+
+%{
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include "ast.h"
+
+    extern int yylex (void);
+    extern int yyerror (char const *);
+    Node_t* programNode = NULL;
+%}
+
+%locations
 
 %union {
     char* value;
@@ -19,7 +22,7 @@ extern int yyerror (char const *);
 
 %token <value> IDENTIFIER INTEGER STRING
 %token <value> OP_PLUS OP_MINUS OP_MULT OP_DIV OP_AND OP_OR OP_COMPARE OP_ASSIGN
-%token ELSE RETURN REF BLOCK
+%token ELSE RETURN REF BLOCKT
 %token ASSIGN SEPARATOR ENDL
 %token TERNARY_QUESTION TERNARY_COLON
 %token OPEN_BRACES CLOSE_BRACES
@@ -32,15 +35,19 @@ extern int yyerror (char const *);
 %left OP_COMPARE
 %left TERNARY_QUESTION TERNARY_COLON
 
-%type <node> program block statement block_statement inline_statement function_interface_item
+%type <node> block statement block_statement inline_statement function_interface_item
 %type <node> expression conditional_expression expression_term expression_factor expression_summand expression_product factor
 %type <children> statement_sequence expression_chain block_expression_chain inline_expression_chain function_interface call call_expression_sequence
 
 %%
 
-program
-: statement_sequence    { $$ = parseBlock("Block", NULL, $1); display($$, 0); destroyNode($$); }
-;
+program: statement_sequence {
+    programNode = parseBlock("Block", NULL, $1);
+    Node_t* call = createNode("Call", "main");
+
+    pushChild(call, createNode("Block", NULL));
+    pushChild(programNode, call);
+};
 
 block
 : OPEN_BRACES ENDL statement_sequence CLOSE_BRACES          { $$ = parseBlock("Block", NULL, $3); }
@@ -76,6 +83,7 @@ expression_chain
 block_expression_chain
 : block                                                 { $$ = createChild($1); }
 | block ELSE block_expression_chain                     { $$ = createChild($1); mergeChildren($$, $3); }
+| expression ELSE block_expression_chain                { $$ = createChild($1); mergeChildren($$, $3); }
 | IDENTIFIER call block                                 { $$ = createChild(parseBlock("Call", $1, $2)); pushChild($$->node, $3); }
 | IDENTIFIER call block ELSE block_expression_chain     { $$ = createChild(parseBlock("Call", $1, $2)); pushChild($$->node, $3); mergeChildren($$, $5); }
 ;
@@ -130,8 +138,7 @@ factor
 : INTEGER                                   { $$ = createNode("Integer", $1); }
 | STRING                                    { $$ = createNode("String", $1); }
 | IDENTIFIER                                { $$ = createNode("Identifier", $1); }
-| IDENTIFIER call                           { $$ = parseBlock("Call", $1, $2); pushChild($$, createNode("No_operation", NULL)); }
-| BLOCK OPEN_PARENTHESIS CLOSE_PARENTHESIS  { $$ = createNode("Identifier", "block"); }
+| IDENTIFIER call                           { $$ = parseBlock("Call", $1, $2); pushChild($$, createNode("Block", NULL)); }
 ;
 
 call
@@ -152,7 +159,7 @@ function_interface
 function_interface_item
 : IDENTIFIER IDENTIFIER                                 { $$ = parseDeclaration($1, $2, NULL); }
 | IDENTIFIER IDENTIFIER ASSIGN conditional_expression   { $$ = parseDeclaration($1, $2, $4); }
-| REF IDENTIFIER IDENTIFIER                             { $$ = createNode("Ref", NULL); pushChild($$, parseDeclaration($2, $3, NULL)); }
+| REF IDENTIFIER IDENTIFIER                             { $$ = createNode("Reference", NULL); pushChild($$, parseDeclaration($2, $3, NULL)); }
 ;
 
 %%

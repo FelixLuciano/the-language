@@ -60,36 +60,38 @@ void pushChild(Node_t* parent, Node_t* node) {
     return pushChildren(parent, children);
 }
 
-void displayIdent(int size) {
-    for (; size > 0; size--) printf("  ");
+void scriptIdent(int size, FILE* output) {
+    for (; size > 0; size--) fprintf(output, "  ");
 }
 
-void display(Node_t* node, int deep) {
-    displayIdent(deep);
-    printf("%s(", node->type);
+void buildScript(Node_t* node, int deep, FILE* output) {
+    // scriptIdent(deep, output);
+    fprintf(output, "%s(", node->type);
 
-    if (node->value == NULL) printf("None");
-    else printf("\"%s\"", node->value);
+    if (node->value == NULL) fprintf(output, "None");
+    else fprintf(output, "\"%s\"", node->value);
 
-    if (node->children != NULL) printf(", [\n");
+    // if (node->children != NULL) fprintf(output, ", [\n");
+    if (node->children != NULL) fprintf(output, ",[");
 
     for (NodeList_t* children = node->children; children != NULL; children = children->next) {
-        display(children->node, deep+1);
+        buildScript(children->node, deep+1, output);
 
         if (children->next != NULL) {
-            printf(",\n");
+            // fprintf(output, ",\n");
+            fprintf(output, ",");
         }
         else {
-            printf("\n");
-            displayIdent(deep);
+            // fprintf(output, "\n");
+            // scriptIdent(deep, output);
         }
     }
 
-    if (node->children != NULL) printf("]");
+    if (node->children != NULL) fprintf(output, "]");
 
-    printf(")");
+    fprintf(output, ")");
 
-    if (deep == 0) printf("\n");
+    // if (deep == 0) fprintf(output, "\n");
 }
 
 Node_t* parseBlock(char* type, char* value, NodeList_t* children) {
@@ -120,7 +122,7 @@ Node_t* parseTernaryOperation(Node_t* condition, Node_t* a, Node_t* b) {
 }
 
 Node_t* parseDeclaration(char* type, char* name, Node_t* value) {
-    Node_t* node = createNode("Variable", type);
+    Node_t* node = createNode("Declaration", type);
 
     pushChild(node, createNode("Identifier", name));
 
@@ -140,7 +142,7 @@ Node_t* parseStatement(NodeList_t* children) {
 }
 
 Node_t* parseAssignment(char* name, char* type, NodeList_t* value) {
-    Node_t* node = createNode("Assign", name);
+    Node_t* node = createNode("Assignment", name);
     Node_t* statement = parseStatement(value);
     
     if (type != NULL) {
