@@ -23,7 +23,7 @@ integer = number, { number } ;
 
 string = '"', { character }, '"' ;
 
-comment = "//", { [^\n] } ;
+comment = "//", { ["\n"] } ;
 
 program = { statement_sequence } ;
 
@@ -53,7 +53,7 @@ inline_expression_chain = expression, { "else", expression } ;
 
 expression = conditional_expression, [ "?", expression, ":", expression ] ;
 
-conditional_expression = expression_term, { ( "==", "!=", ">", ">=", "<", "<=" ),  expression_term } ;
+conditional_expression = expression_term, { ( "==" | "!=" | ">" | ">=" | "<" | "<=" ),  expression_term } ;
 
 expression_term = expression_factor, { "||", expression_factor } ;
 
@@ -71,9 +71,9 @@ factor = integer
 
 call = "(", [ call_expression_sequence ], ")" ;
 
-call_expression_sequence = inline_statement, { ";" inline_statement } ;
+call_expression_sequence = inline_statement, { ";", inline_statement } ;
 
-function_interface = function_interface_item, { ";" function_interface_item } ;
+function_interface = function_interface_item, { ";", function_interface_item } ;
 
 function_interface_item = identifier, identifier, [ "=", conditional_expression ]
                         | ref, identifier, identifier ;
