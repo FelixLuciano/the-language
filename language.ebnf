@@ -19,11 +19,11 @@ digit = "0" | "1" | "2" | "3" | "4" | "5" | "6"
 
 identifier = letter , { letter | digit | "_" } ;
 
-integer = number, { number } ;
+integer = digit, { digit } ;
 
 string = '"', { character }, '"' ;
 
-comment = "//", { ["\n"] } ;
+comment = "//", { character | digit }, "\n" ;
 
 program = { statement_sequence } ;
 
@@ -43,10 +43,10 @@ block_statement = block_expression_chain
 expression_chain = block_expression_chain
                  | inline_expression_chain ;
 
-block_expression_chain = [ IDENTIFIER, call ], block, { "else", [ IDENTIFIER, call ], block } ;
+block_expression_chain = [ identifier, call ], block, { "else", [ identifier, call ], block } ;
 
 inline_statement = inline_expression_chain
-                 | identifier, identifier, [assign, inline_expression_chain]
+                 | identifier, identifier, ["=", inline_expression_chain]
                  | identifier, ( "=" | "+=" | "-=" | "*=" | "/=" ), inline_expression_chain ;
 
 inline_expression_chain = expression, { "else", expression } ;
@@ -76,4 +76,4 @@ call_expression_sequence = inline_statement, { ";", inline_statement } ;
 function_interface = function_interface_item, { ";", function_interface_item } ;
 
 function_interface_item = identifier, identifier, [ "=", conditional_expression ]
-                        | ref, identifier, identifier ;
+                        | "ref", identifier, identifier ;
